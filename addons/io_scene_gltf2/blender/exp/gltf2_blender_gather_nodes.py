@@ -35,6 +35,19 @@ def gather_node(blender_object, export_settings):
     if not __filter_node(blender_object, export_settings):
         return None
 
+    if blender_object.dupli_type == 'GROUP': #expect linked objects to be linked as group
+        linkedFilePath = blender_object.dupli_group.library.filepath
+        objs = blender_object.dupli_group.objects 
+        # convention: expect this' size to be one,
+        # should contain the parent this object wants to clone (instance)
+        assert len(objs) == 1
+        linkedParentObjectName = obs[0].name
+        
+
+
+
+    #py.context.active_object.dupli_group.library.filepath
+
     node = gltf2_io.Node(
         camera=__gather_camera(blender_object, export_settings),
         children=__gather_children(blender_object, export_settings),
