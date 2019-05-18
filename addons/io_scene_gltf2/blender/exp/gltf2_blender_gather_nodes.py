@@ -69,17 +69,33 @@ def gather_node(blender_object, export_settings):
 def gather_linked_nodes(blender_object, export_settings):
     nodes = []
 
-    assert blender_object.dupli_type == 'GROUP' #expect linked objects to be linked as group
+    if bpy.app.version < (2, 80, 0):
+        assert blender_object.dupli_type == 'GROUP' #expect linked objects to be linked as group
+    else:
+        assert blender_object.instance_type == 'COLLECTION'
 
-    linkedFilePath = blender_object.dupli_group.library.filepath #ends with .blend 
+    linkedFilePath = []
+    instanceObjs = [] 
+    instancedGroup = None
+    if bpy.app.version < (2, 80, 0):
+        linkedFilePath = blender_object.dupli_group.library.filepath #ends with .blend 
+        instanceObjs = blender_object.dupli_group.objects
+        instancedGroup = blender_object.dupli_group
+    else:
+        linkedFilePath = blender_object.instance_collection.library.filepath#ends with .blend 
+        instanceObjs = blender_object.instance_collection.objects
+        instancedGroup = blender_object.instance_collection
     linkedFilePath = linkedFilePath[0:-6] + ".glb"# change to .glb
-    instanceObjs = blender_object.dupli_group.objects 
+    
     #find the parents in the group
-    instancedGroup = blender_object.dupli_group
+    
     for instancedObj in instanceObjs:
         rootInGroup = instancedObj.parent == None
         if not rootInGroup:
-            rootInGroup = not instancedGroup in instancedObj.parent.users_group
+            if bpy.app.version < (2, 80, 0):
+                rootInGroup = not instancedGroup in instancedObj.parent.users_group
+            else:
+                rootInGroup = not instancedGroup in instancedObj.parent.users_collection
         if rootInGroup: #this is a 'root' node inside the group
             linkNode = gltf2_io.Node(
                 camera=None,
@@ -104,10 +120,6 @@ def gather_linked_nodes(blender_object, export_settings):
             if value is not None:
                 linkNode.extras["instanceName"] = value
     return nodes
-
-def is_link(blender_object):
-    return (blender_object.dupli_type == 'GROUP')
-
 
 def __filter_node(blender_object, export_settings):
     if blender_object.users == 0:
@@ -136,19 +148,25 @@ def __gather_camera(blender_object, export_settings):
 
     return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
 
+def is_link(blender_object):
+    if bpy.app.version < (2, 80, 0):
+        return (blender_object.dupli_type == 'GROUP')
+    else :
+        return (blender_object.instance_type == 'COLLECTION')
 
 def __gather_children(blender_object, export_settings):
     children = []
     # standard children
-    for child_object in blender_object.children:
-        if child_object.parent_bone:
-            # this is handled further down,
-            # as the object should be a child of the specific bone,
-            # not the Armature object
-            continue
-        node = gather_node(child_object, export_settings)
-        if node is not None:
-            children.append(node)
+    if not is_link(blender_object):
+        for child_object in blender_object.children:
+            if child_object.parent_bone:
+                # this is handled further down,
+                # as the object should be a child of the specific bone,
+                # not the Armature object
+                continue
+            node = gather_node(child_object, export_settings)
+            if node is not None:
+                children.append(node)
     # blender dupli objects
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
@@ -158,8 +176,8 @@ def __gather_children(blender_object, export_settings):
                     children.append(node)
     else:
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            for dupli_object in blender_object.instance_collection.objects:
-                node = gather_node(dupli_object, export_settings)
+            nodes = gather_linked_nodes(blender_object, export_settings)
+            for node in nodes:
                 if node is not None:
                     children.append(node)
 
@@ -339,12 +357,12 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
-            trans = trans;# -gltf2_blender_extract.convert_swizzle_location(
+            trans = trans# -gltf2_blender_extract.convert_swizzle_location(
                 #blender_object.dupli_group.dupli_offset, export_settings)
     else:
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            trans = -gltf2_blender_extract.convert_swizzle_location(
-                blender_object.instance_collection.instance_offset, export_settings)
+            trans = trans #-gltf2_blender_extract.convert_swizzle_location(
+                #blender_object.instance_collection.instance_offset, export_settings)
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
                                    gltf2_blender_math.round_if_near(trans[2], 0.0)
