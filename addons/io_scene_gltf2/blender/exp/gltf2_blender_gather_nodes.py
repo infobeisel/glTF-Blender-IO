@@ -35,19 +35,6 @@ def gather_node(blender_object, export_settings):
     if not __filter_node(blender_object, export_settings):
         return None
 
-    if blender_object.dupli_type == 'GROUP': #expect linked objects to be linked as group
-        linkedFilePath = blender_object.dupli_group.library.filepath
-        objs = blender_object.dupli_group.objects 
-        # convention: expect this' size to be one,
-        # should contain the parent this object wants to clone (instance)
-        assert len(objs) == 1
-        linkedParentObjectName = obs[0].name
-        
-
-
-
-    #py.context.active_object.dupli_group.library.filepath
-
     node = gltf2_io.Node(
         camera=__gather_camera(blender_object, export_settings),
         children=__gather_children(blender_object, export_settings),
@@ -77,6 +64,49 @@ def gather_node(blender_object, export_settings):
         node.camera = None
 
     return node
+
+@cached
+def gather_linked_nodes(blender_object, export_settings):
+    nodes = []
+
+    assert blender_object.dupli_type == 'GROUP' #expect linked objects to be linked as group
+
+    linkedFilePath = blender_object.dupli_group.library.filepath #ends with .blend 
+    linkedFilePath = linkedFilePath[0:-6] + ".glb"# change to .glb
+    instanceObjs = blender_object.dupli_group.objects 
+    #find the parents in the group
+    instancedGroup = blender_object.dupli_group
+    for instancedObj in instanceObjs:
+        rootInGroup = instancedObj.parent == None
+        if not rootInGroup:
+            rootInGroup = not instancedGroup in instancedObj.parent.users_group
+        if rootInGroup: #this is a 'root' node inside the group
+            linkNode = gltf2_io.Node(
+                camera=None,
+                children=None,
+                extensions=None,
+                extras={},#__gather_extras(instancedObj, export_settings),
+                matrix=None,#__gather_matrix(instancedObj, export_settings),
+                mesh=None,
+                name="link",#__gather_name(instancedObj, export_settings),
+                rotation=None,
+                scale=None,
+                skin=None,
+                translation=None,
+                weights=None
+                )
+            nodes.append(linkNode) #append to return list
+            #add custom properties: one for library path, one for object name in library
+            value = gltf2_blender_generate_extras.__to_json_compatible(linkedFilePath)
+            if value is not None:
+                linkNode.extras["instancePath"] = value
+            value = gltf2_blender_generate_extras.__to_json_compatible(instancedObj.name)
+            if value is not None:
+                linkNode.extras["instanceName"] = value
+    return nodes
+
+def is_link(blender_object):
+    return (blender_object.dupli_type == 'GROUP')
 
 
 def __filter_node(blender_object, export_settings):
@@ -122,8 +152,8 @@ def __gather_children(blender_object, export_settings):
     # blender dupli objects
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
-            for dupli_object in blender_object.dupli_group.objects:
-                node = gather_node(dupli_object, export_settings)
+            nodes = gather_linked_nodes(blender_object, export_settings)
+            for node in nodes:
                 if node is not None:
                     children.append(node)
     else:
@@ -309,8 +339,8 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
-            trans = -gltf2_blender_extract.convert_swizzle_location(
-                blender_object.dupli_group.dupli_offset, export_settings)
+            trans = trans;# -gltf2_blender_extract.convert_swizzle_location(
+                #blender_object.dupli_group.dupli_offset, export_settings)
     else:
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
             trans = -gltf2_blender_extract.convert_swizzle_location(
