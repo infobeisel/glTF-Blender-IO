@@ -51,9 +51,9 @@ def __gather_scene(blender_scene, export_settings):
         if blender_object.parent is None:
 
             #if not gltf2_blender_gather_nodes.is_link(blender_object): #usual construct export node
-                node = gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
-                if node is not None:
-                    scene.nodes.append(node)
+            node = gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
+            if node is not None:
+                scene.nodes.append(node)
 
             #elif gltf2_blender_gather_nodes.is_link(blender_object): # node that links to node in other file, construct special export nodes
              #   nodes = gltf2_blender_gather_nodes.gather_linked_nodes(blender_object, export_settings)

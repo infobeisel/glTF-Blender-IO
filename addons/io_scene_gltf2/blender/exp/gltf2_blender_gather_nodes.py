@@ -334,16 +334,8 @@ def __gather_mesh(blender_object, export_settings):
 
     return result
 
-
 def __gather_name(blender_object, export_settings):
-    if bpy.app.version < (2, 80, 0):
-        if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
-            return "Duplication_Offset_" + blender_object.name
-    else:
-        if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            return "Duplication_Offset_" + blender_object.name
     return blender_object.name
-
 
 def __gather_trans_rot_scale(blender_object, export_settings):
     if blender_object.matrix_parent_inverse == Matrix.Identity(4):
