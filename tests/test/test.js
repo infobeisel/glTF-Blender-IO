@@ -70,6 +70,12 @@ function validateGltf(gltfPath, done) {
             })
     }).then((result) => {
         // [result] will contain validation report in object form.
+        if (result.issues.numErrors > 0) {
+            const errors = result.issues.messages.filter(i => i.severity === 0)
+                .reduce((msg, i, idx) => (idx > 5) ? msg : `${msg}\n${i.pointer} - ${i.message} (${i.code})`, '');
+            done(new Error("Validation failed for " + gltfPath + '\nFirst few messages:' + errors), result);
+            return;
+        }
         done(null, result);
     }, (result) => {
         // Promise rejection means that arguments were invalid or validator was unable
@@ -214,11 +220,10 @@ describe('Exporter', function() {
 
             it('produces an Occlusion texture', function() {
                 // Expect upper-left black square.  This is a special case because when R/M are not
-                // present, occlusion may take all channels.  Currently this test "expects" the
-                // grayscale PNG to get converted to a color PNG, but someday this should be optimized
-                // to preserve the original PNG exactly.
+                // present, occlusion may take all channels.  This test now "expects" the
+                // grayscale PNG to be preserved exactly.
                 let resultName = path.resolve(outDirPath, '08_img_occlusion.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-upper-left-black.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_img_occlusion.png');
                 let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
@@ -407,6 +412,56 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
         describe(blenderVersion + '_roundtrip_results', function() {
             let outDirName = 'out' + blenderVersion;
+
+            if (blenderVersion !== 'blender279b') {
+                // Only Blender 2.80 and above will roundtrip alpha blend mode.
+                it('roundtrips alpha blend mode', function() {
+                    let dir = '01_alpha_blend';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 2);
+
+                    const opaqueMaterials = asset.materials.filter(m => m.name === 'Cube');
+                    assert.strictEqual(opaqueMaterials.length, 1);
+                    assert.strictEqual(opaqueMaterials[0].alphaMode, undefined);
+
+                    const blendedMaterials = asset.materials.filter(m => m.name === 'Transparent_Plane');
+                    assert.strictEqual(blendedMaterials.length, 1);
+                    assert.strictEqual(blendedMaterials[0].alphaMode, 'BLEND');
+                });
+
+                // Only Blender 2.80 and above will roundtrip alpha mask mode.
+                it('roundtrips alpha mask mode', function() {
+                    let dir = '01_alpha_mask';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    assert.strictEqual(asset.materials[0].alphaMode, 'MASK');
+                    assert.equalEpsilon(asset.materials[0].alphaCutoff, 0.42);
+                });
+
+                // Only Blender 2.80 and above will roundtrip the doubleSided flag.
+                it('roundtrips the doubleSided flag', function() {
+                    let dir = '01_single_vs_double_sided';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 2);
+
+                    const singleSidedMaterials = asset.materials.filter(m => m.name === 'mat_single');
+                    assert.strictEqual(singleSidedMaterials.length, 1);
+                    assert.strictEqual(singleSidedMaterials[0].doubleSided, undefined);
+
+                    const doubleSidedMaterials = asset.materials.filter(m => m.name === 'mat_double');
+                    assert.strictEqual(doubleSidedMaterials.length, 1);
+                    assert.strictEqual(doubleSidedMaterials[0].doubleSided, true);
+                });
+            }
 
             it('roundtrips an OcclusionRoughnessMetallic texture', function() {
                 let dir = '08_combine_orm';

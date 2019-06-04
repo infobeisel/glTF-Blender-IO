@@ -1,4 +1,4 @@
-# Copyright 2018 The glTF-Blender-IO authors.
+# Copyright 2018-2019 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ FILTERED_OBJECTS = 'filtered_objects'
 FILTERED_CAMERAS = 'filtered_cameras'
 
 APPLY = 'gltf_apply'
-LAYERS = 'gltf_layers'
 SELECTED = 'gltf_selected'
 SKINS = 'gltf_skins'
 DISPLACEMENT = 'gltf_displacement'
@@ -39,7 +38,6 @@ FILE_DIRECTORY = 'gltf_filedirectory'
 BINARY_FILENAME = 'gltf_binaryfilename'
 YUP = 'gltf_yup'
 MORPH = 'gltf_morph'
-BAKE_SKINS = 'gltf_bake_skins'
 TEX_COORDS = 'gltf_texcoords'
 COLORS = 'gltf_colors'
 NORMALS = 'gltf_normals'

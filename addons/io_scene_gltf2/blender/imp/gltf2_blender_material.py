@@ -1,4 +1,4 @@
-# Copyright 2018 The glTF-Blender-IO authors.
+# Copyright 2018-2019 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,6 +48,11 @@ class BlenderMaterial():
 
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material[vertex_color] = mat.name
+
+        if bpy.app.version < (2, 80, 0):
+            pass # Blender 2.79 did not have a per-material double-sided flag.
+        else:
+            mat.use_backface_culling = (pymaterial.double_sided != True)
 
         ignore_map = False
 
@@ -124,7 +129,7 @@ class BlenderMaterial():
                 material.blend_method = 'BLEND'
             elif alpha_mode == "MASK":
                 material.blend_method = 'CLIP'
-                alpha_cutoff = 1.0 - pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
+                alpha_cutoff = pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
                 material.alpha_threshold = alpha_cutoff
 
         node_tree = material.node_tree
@@ -176,6 +181,7 @@ class BlenderMaterial():
             mult = node_tree.nodes.new('ShaderNodeMath')
             mult.operation = 'MULTIPLY' if pymaterial.alpha_mode == 'BLEND' else 'GREATER_THAN'
             mult.location = 500, -250
+            # Note that `1.0 - pymaterial.alpha_cutoff` is used due to the invert node above.
             alpha_cutoff = 1.0 if pymaterial.alpha_mode == 'BLEND' else \
                 1.0 - pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
             mult.inputs[1].default_value = alpha_cutoff

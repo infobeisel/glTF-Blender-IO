@@ -1,4 +1,4 @@
-# Copyright 2018 The glTF-Blender-IO authors.
+# Copyright 2018-2019 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -117,11 +117,16 @@ class BlenderScene():
             gltf.animation_managed = []
             for anim_idx, anim in enumerate(gltf.data.animations):
                 gltf.current_animation_names = {}
+                gltf.actions_stashed= {}
                 if list_nodes is not None:
                     for node_idx in list_nodes:
                         BlenderAnimation.anim(gltf, anim_idx, node_idx)
                 for an in gltf.current_animation_names.values():
                     gltf.animation_managed.append(an)
+                    for node_idx in list_nodes:
+                        BlenderAnimation.stash_action(gltf, anim_idx, node_idx, an)
+            for node_idx in list_nodes:
+                BlenderAnimation.restore_last_action(gltf, node_idx)
 
         if bpy.app.debug_value != 100:
             # Parent root node to rotation object

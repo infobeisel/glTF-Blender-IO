@@ -1,4 +1,4 @@
-# Copyright 2018 The glTF-Blender-IO authors.
+# Copyright 2018-2019 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -129,14 +129,6 @@ def __filter_node(blender_object, export_settings):
             return False
     else:
         if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
-            return False
-    if not export_settings[gltf2_blender_export_keys.LAYERS] and not blender_object.layers[0]:
-        return False
-    if bpy.app.version < (2, 80, 0):
-        if blender_object.dupli_group is not None and not blender_object.dupli_group.layers[0]:
-            return False
-    else:
-        if blender_object.instance_collection is not None and not blender_object.instance_collection.layers[0]:
             return False
 
     return True
@@ -292,7 +284,10 @@ def __gather_mesh(blender_object, export_settings):
             edge_split.split_angle = blender_object.data.auto_smooth_angle
             edge_split.use_edge_angle = not blender_object.data.has_custom_normals
             blender_object.data.use_auto_smooth = False
-            bpy.context.view_layer.update()
+            if bpy.app.version < (2, 80, 0):
+                bpy.context.scene.update()
+            else:
+                bpy.context.view_layer.update()
 
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
