@@ -198,17 +198,21 @@ class BlenderScene():
                         #bpy.context.scene.collection.objects.unlink(obj_rotation)
                         bpy.data.objects.remove(obj_rotation)
 
-                        # Restore collection hiden / disabled values
+                        # Restore collection hidden / disabled values
                         if gltf.blender_active_collection is not None:
                             bpy.data.collections[gltf.blender_active_collection].hide_viewport = gltf.collection_hide_viewport
                             # TODO restore visibility when expose in bpy
 
         # Make first root object the new active one
         if list_nodes is not None:
-            if bpy.app.version < (2, 80, 0):
-                bpy.context.scene.objects.active = bpy.data.objects[gltf.data.nodes[list_nodes[0]].blender_object]
+            if gltf.data.nodes[list_nodes[0]].blender_object:
+                bl_name = gltf.data.nodes[list_nodes[0]].blender_object
             else:
-                bpy.context.view_layer.objects.active = bpy.data.objects[gltf.data.nodes[list_nodes[0]].blender_object]
+                bl_name = gltf.data.nodes[list_nodes[0]].blender_armature_name
+            if bpy.app.version < (2, 80, 0):
+                bpy.context.scene.objects.active = bpy.data.objects[bl_name]
+            else:
+                bpy.context.view_layer.objects.active = bpy.data.objects[bl_name]
 
     @staticmethod
     def get_root_nodes(gltf):

@@ -110,23 +110,24 @@ class GlTF2Exporter:
         if self.__finalized:
             raise RuntimeError("Tried to finalize buffers for finalized glTF file")
 
-        if is_glb:
-            uri = None
-        elif output_path and buffer_name:
-            with open(output_path + buffer_name, 'wb') as f:
-                f.write(self.__buffer.to_bytes())
-            uri = buffer_name
-        else:
-            uri = self.__buffer.to_embed_string()
+        if self.__buffer.byte_length > 0:
+            if is_glb:
+                uri = None
+            elif output_path and buffer_name:
+                with open(output_path + buffer_name, 'wb') as f:
+                    f.write(self.__buffer.to_bytes())
+                uri = buffer_name
+            else:
+                uri = self.__buffer.to_embed_string()
 
-        buffer = gltf2_io.Buffer(
-            byte_length=self.__buffer.byte_length,
-            extensions=None,
-            extras=None,
-            name=None,
-            uri=uri
-        )
-        self.__gltf.buffers.append(buffer)
+            buffer = gltf2_io.Buffer(
+                byte_length=self.__buffer.byte_length,
+                extensions=None,
+                extras=None,
+                name=None,
+                uri=uri
+            )
+            self.__gltf.buffers.append(buffer)
 
         self.__finalized = True
 
@@ -155,7 +156,7 @@ class GlTF2Exporter:
             with open(dst_path, 'wb') as f:
                 f.write(image.data)
 
-    def add_scene(self, scene: gltf2_io.Scene, active: bool = True):
+    def add_scene(self, scene: gltf2_io.Scene, active: bool = False):
         """
         Add a scene to the glTF.
 
