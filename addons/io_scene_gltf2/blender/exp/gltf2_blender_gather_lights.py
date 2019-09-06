@@ -118,7 +118,7 @@ def __gather_extras(blender_lamp, export_settings) -> Optional[Any]:
 def __get_cycles_emission_node(blender_lamp) -> Optional[bpy.types.ShaderNodeEmission]:
     if blender_lamp.use_nodes and blender_lamp.node_tree:
         for currentNode in blender_lamp.node_tree.nodes:
-            if isinstance(currentNode, bpy.types.ShaderNodeOutputLamp):
+            if isinstance(currentNode, bpy.types.ShaderNodeOutputLight):
                 if not currentNode.is_active_output:
                     continue
                 result = gltf2_blender_search_node_tree.from_socket(
