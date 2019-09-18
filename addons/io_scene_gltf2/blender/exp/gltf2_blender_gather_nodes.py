@@ -69,6 +69,8 @@ def __gather_node(blender_object, blender_scene, export_settings):
         weights=__gather_weights(blender_object, export_settings)
     )
     node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
+    #texts
+    __gather_texts(blender_object,node,export_settings)
 
     if export_settings[gltf2_blender_export_keys.YUP]:
         if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS]:
@@ -287,6 +289,14 @@ def __gather_extras(blender_object, export_settings):
     if export_settings['gltf_extras']:
         return gltf2_blender_generate_extras.generate_extras(blender_object)
     return None
+
+def __gather_texts(blender_object,gltf_node,export_settings):
+    #isinstance(bpy.data.curves[0],bpy.types.TextCurve)
+    if gltf_node and blender_object.type == 'FONT' and export_settings['gltf_extras']:
+        if not gltf_node.extras:
+            gltf_node.extras = {}
+        txt = blender_object.data.body
+        gltf_node.extras["textNode"] = "asddd"
 
 
 def __gather_matrix(blender_object, export_settings):
