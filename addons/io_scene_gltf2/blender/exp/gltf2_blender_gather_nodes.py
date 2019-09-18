@@ -296,7 +296,7 @@ def __gather_texts(blender_object,gltf_node,export_settings):
         if not gltf_node.extras:
             gltf_node.extras = {}
         txt = blender_object.data.body
-        gltf_node.extras["textNode"] = "asddd"
+        gltf_node.extras["textNode"] = txt
 
 
 def __gather_matrix(blender_object, export_settings):
