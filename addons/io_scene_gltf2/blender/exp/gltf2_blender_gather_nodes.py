@@ -200,7 +200,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
                     children.append(node)
     else:
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            nodes = gather_linked_nodes(blender_object, export_settings)
+            nodes = gather_linked_nodes(blender_object,blender_scene, export_settings)
             for node in nodes:
                 if node is not None:
                     children.append(node)
