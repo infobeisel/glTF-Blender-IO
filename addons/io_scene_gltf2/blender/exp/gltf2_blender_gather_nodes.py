@@ -300,7 +300,9 @@ def __gather_texts(blender_object,gltf_node,export_settings):
         if not gltf_node.extras:
             gltf_node.extras = {}
         txt = blender_object.data.body
-        gltf_node.extras["textNode"] = txt
+        gltf_node.extras["textNode"] = r'{"text":"' + txt + '","fontName":"' + blender_object.data.font.name + '"}'
+
+        
 
 
 def __gather_matrix(blender_object, export_settings):
