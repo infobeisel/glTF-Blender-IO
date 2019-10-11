@@ -421,12 +421,12 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
-            trans = -gltf2_blender_extract.convert_swizzle_location(
-                blender_object.dupli_group.dupli_offset, None, None, export_settings)
+            trans = trans # -gltf2_blender_extract.convert_swizzle_location(
+                #blender_object.dupli_group.dupli_offset, None, None, export_settings)
     else:
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            trans = -gltf2_blender_extract.convert_swizzle_location(
-                blender_object.instance_collection.instance_offset, None, None, export_settings)
+            trans = trans # -gltf2_blender_extract.convert_swizzle_location(
+                #blender_object.instance_collection.instance_offset, None, None, export_settings)
 
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
