@@ -144,6 +144,11 @@ def gather_linked_nodes(blender_object, blender_scene, export_settings):
             value = gltf2_blender_generate_extras.__to_json_compatible(instancedObj.name)
             if value is not None:
                 linkNode.extras["instanceName"] = value
+
+
+    #instanced node can have "normal" children from this file. load them as well
+    normalNodes = [__gather_node(child, blender_scene, export_settings) for child in blender_object.children if not child.parent_bone]
+    nodes = nodes + normalNodes
     return nodes
 
 def __filter_node(blender_object, blender_scene, export_settings):
