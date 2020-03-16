@@ -23,7 +23,7 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_light_spots
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
-
+from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
 
 @cached
 def gather_lights_punctual(blender_lamp, export_settings) -> Optional[Dict[str, Any]]:
@@ -112,6 +112,8 @@ def __gather_extensions(blender_lamp, export_settings) -> Optional[dict]:
 
 
 def __gather_extras(blender_lamp, export_settings) -> Optional[Any]:
+    if export_settings['gltf_extras']:
+        return gltf2_blender_generate_extras.generate_extras(blender_lamp)
     return None
 
 
